@@ -54,18 +54,10 @@ namespace MultiTagInvertedIndex.Rules
     /// Rule representing single tag.
     /// </summary>
     /// <typeparam name="TTag">Tag type.</typeparam>
-    public sealed class SingleRule<TTag> : Rule<TTag>
+    /// <param name="tag">Associated tag.</param>
+    public sealed class SingleRule<TTag>(TTag tag) : Rule<TTag>
     {
-        private readonly TTag _tag;
-        /// <summary>
-        /// Constructor.
-        /// </summary>
-        /// <param name="tag">Associated tag.</param>
-        public SingleRule(TTag tag)
-        {
-            ArgumentNullException.ThrowIfNull(tag, nameof(tag));
-            _tag = tag;
-        }
+        private readonly TTag _tag = tag ?? throw new ArgumentNullException(nameof(tag));
 
         /// <inheritdoc/>
         public override RoaringBitmap Compute(Func<TTag, RoaringBitmap> bitmapByTag, RoaringBitmap allValues) =>
@@ -93,7 +85,8 @@ namespace MultiTagInvertedIndex.Rules
         /// <exception cref="ArgumentException">Thrown if given collection is empty.</exception>
         protected CompositeRule(params Rule<TTag>[] rules)
         {
-            ArgumentNullException.ThrowIfNull(rules, nameof(rules));
+            if (rules == null)
+                throw new ArgumentNullException(nameof(rules));
             if (rules.Length == 0)
                 throw new ArgumentException("Rules collection must not be empty", nameof(rules));
             _childRules = rules;
@@ -186,18 +179,11 @@ namespace MultiTagInvertedIndex.Rules
     /// Rule matching values that do not satisfy the inner rule.
     /// </summary>
     /// <typeparam name="TTag">Tag type.</typeparam>
-    public sealed class NotRule<TTag> : Rule<TTag>
+    /// <param name="rule">Child rule.</param>
+    public sealed class NotRule<TTag>(Rule<TTag> rule) : Rule<TTag>
     {
-        private readonly Rule<TTag> _rule;
-        /// <summary>
-        /// Contrustor.
-        /// </summary>
-        /// <param name="rule">Child rule.</param>
-        public NotRule(Rule<TTag> rule)
-        {
-            ArgumentNullException.ThrowIfNull(rule, nameof(rule));
-            _rule = rule;
-        }
+        private readonly Rule<TTag> _rule = rule ?? throw new ArgumentNullException(nameof(rule));
+
         /// <inheritdoc/>
         public override RoaringBitmap Compute(Func<TTag, RoaringBitmap> bitmapByTag, RoaringBitmap allValues) =>
             RoaringBitmap.AndNot(allValues, _rule.Compute(bitmapByTag, allValues));
